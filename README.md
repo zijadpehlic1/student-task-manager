@@ -12,6 +12,16 @@ Student Task Manager je web aplikacija za organizaciju studentskih zadataka, rok
 
 Projekat je izrađen za predmet **Operativni sistemi i računarstvo u oblaku**.
 
+## Deployment Linkovi
+
+- GitHub repozitorij: OVDJE_STAVI_LINK_GITHUB_REPOZITORIJA
+- Frontend URL: https://student-task-manager-frontend-427616264825.europe-west1.run.app
+- Backend URL: https://student-task-manager-backend-427616264825.europe-west1.run.app
+- Backend tasks endpoint: https://student-task-manager-backend-427616264825.europe-west1.run.app/tasks
+- Google Cloud Project ID: student-task-manager-zp-gmail
+- Region: europe-west1
+- Artifact Registry repozitorij: student-task-manager-repo
+
 ## 3. Uradio
 
 | Ime i prezime | Doprinos |
