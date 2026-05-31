@@ -1,73 +1,76 @@
 # Student Task Manager
 
-## Naziv Projekta
+## 1. Naziv Projekta
 
-Student Task Manager
+**Student Task Manager**
 
-## Opis Projekta
+GitHub repozitorij: <https://github.com/zijadpehlic1/student-task-manager>
 
-Student Task Manager je web aplikacija razvijena za predmet **Operativni sistemi i računarstvo u oblaku**. Aplikacija omogućava pregled, dodavanje, uređivanje, brisanje i filtriranje studentskih zadataka vezanih za fakultetske obaveze.
+## 2. Opis Projekta
 
-Projekat koristi React frontend, json-server backend, Docker kontejnerizaciju i pripremljen je za deployment na Google Cloud Run.
+Student Task Manager je web aplikacija za organizaciju studentskih zadataka, rokova i prioriteta. Aplikacija omogućava jednostavno praćenje obaveza kroz pregled zadataka, dodavanje novih zadataka, uređivanje postojećih zadataka, filtriranje i prikaz statistike.
 
-## Član Tima
+Projekat je izrađen za predmet **Operativni sistemi i računarstvo u oblaku**.
 
-| Član tima | Doprinos |
+## 3. Uradio
+
+| Ime i prezime | Doprinos |
 | --- | --- |
-| Zijad Pehlic | Frontend, backend, Docker konfiguracija, dokumentacija i priprema cloud deploymenta |
+| Zijad Pehlic | Frontend implementacija, backend implementacija, Docker konfiguracija, Docker Compose, health-check skripta, podešavanje GitHub repozitorija, priprema Google Cloud Run deploymenta i deployment dokumentacija |
 
-## Korištene Tehnologije
+## 4. Korištene Tehnologije
 
 - React
 - Vite
-- JavaScript
-- Plain CSS
+- CSS
 - json-server
+- Node.js
 - Docker
 - Docker Compose
-- Nginx
-- GitHub Actions
+- nginx
 - Google Cloud Run
 - Artifact Registry
+- GitHub
+- GitHub Actions
 
-## Arhitektura Aplikacije
+## 5. Arhitektura Aplikacije
 
-Aplikacija je podijeljena na dva odvojena dijela:
+Aplikacija se sastoji od dva glavna dijela:
 
-- `frontend/` - React aplikacija za korisnički interfejs
-- `backend/` - json-server API koji koristi `db.json` kao jednostavnu bazu podataka
+- `frontend/` - React/Vite aplikacija za korisnički interfejs
+- `backend/` - json-server backend koji simulira REST API i izlaže `/tasks` endpoint
 
-Frontend komunicira sa backendom preko HTTP zahtjeva. U lokalnom razvoju koristi se `http://localhost:3001`, dok se u Docker okruženju koristi Nginx `/api` proxy.
+U lokalnom Docker Compose okruženju frontend i backend se pokreću kao odvojeni servisi. Frontend se servira kroz nginx na portu `8080`, a nginx može proslijediti `/api` zahtjeve prema backend servisu.
+
+Na Google Cloud Run deploymentu frontend se builda sa `VITE_API_URL` vrijednošću koja pokazuje na deployment backend servisa. Time frontend direktno koristi javni backend URL.
 
 ```text
-+----------------------+        HTTP / API        +----------------------+
-| React + Vite frontend|  ----------------------> | json-server backend  |
-| localhost:8080       |                          | localhost:3001/tasks |
-+----------------------+                          +----------------------+
-           |                                                |
-           | Nginx /api proxy                               | db.json
-           v                                                v
-+-----------------------------------------------------------------------+
-| Docker Compose: frontend servis, backend servis i named volume za DB   |
-+-----------------------------------------------------------------------+
++------------------------+          HTTP          +-------------------------+
+| React/Vite frontend    | ---------------------> | json-server backend     |
+| nginx, port 8080       |                        | /tasks, port 3001       |
++------------------------+                        +-------------------------+
+          |                                                   |
+          | Docker Compose: /api proxy                        | db.json
+          v                                                   v
++--------------------------------------------------------------------------+
+| Lokalno: frontend + backend servisi, named Docker volume za db.json       |
+| Cloud Run: odvojeni frontend i backend servisi sa javnim URL adresama     |
++--------------------------------------------------------------------------+
 ```
 
-## Funkcionalnosti Aplikacije
+## 6. Funkcionalnosti Aplikacije
 
-- Početna stranica sa nazivom aplikacije i dugmetom za nastavak
-- Mock login stranica bez stvarne autentifikacije
-- Kontrolna ploča sa statistikama zadataka
-- Lista zadataka
-- Dodavanje novog zadatka
-- Uređivanje postojećeg zadatka
+- Mock prijava
+- Pregled zadataka
+- Dodavanje zadatka
+- Uređivanje zadatka
 - Brisanje zadatka
-- Označavanje zadatka kao završenog
-- Vraćanje zadatka u status nezavršenog
-- Filteri za sve, nezavršene, završene i zadatke visokog prioriteta
-- Prikazi za učitavanje, grešku i prazno stanje
-- Responzivan dizajn za desktop i mobilne uređaje
+- Označavanje zadatka kao završen ili nezavršen
+- Filtriranje zadataka
+- Dashboard/statistika
+- Responsive UI
 
-## Lokalno Pokretanje Bez Dockera
+## 7. Lokalno Pokretanje Bez Dockera
 
 Backend:
 
@@ -77,7 +80,7 @@ npm install
 npm start
 ```
 
-Backend je dostupan na:
+Backend lokalni URL:
 
 ```text
 http://localhost:3001/tasks
@@ -91,171 +94,152 @@ npm install
 npm run dev
 ```
 
-Frontend je dostupan na adresi koju prikaže Vite, najčešće:
+Frontend lokalni URL:
 
 ```text
 http://localhost:5173
 ```
 
-Ako `VITE_API_URL` nije definisan, frontend automatski koristi:
+## 8. Pokretanje Pomoću Dockera
 
-```text
-http://localhost:3001
-```
-
-## Pokretanje Pomoću Dockera
-
-Pokretanje oba servisa:
+Pokretanje aplikacije pomoću Docker Compose:
 
 ```bash
 docker compose up --build
 ```
 
-Adrese servisa:
+Docker URL adrese:
 
 ```text
 Frontend: http://localhost:8080
 Backend:  http://localhost:3001/tasks
 ```
 
-Zaustavljanje servisa:
+Zaustavljanje kontejnera:
 
 ```bash
 docker compose down
 ```
 
-Ako želite ukloniti i named volume sa podacima:
+## 9. Docker Konfiguracija
 
-```bash
-docker compose down -v
-```
+Backend Dockerfile:
 
-## Objašnjenje Dockerfile-ova
+- koristi `node:18-alpine`
+- instalira backend dependency-je
+- kopira početni `db.json` kao seed fajl
+- pokreće json-server na portu `3001`
+- koristi persistent lokaciju `/data/db.json` u Docker okruženju
 
-### Frontend Dockerfile
+Frontend Dockerfile:
 
-Frontend Dockerfile koristi multi-stage build:
+- koristi multi-stage build
+- koristi Node.js za build React/Vite aplikacije
+- koristi `nginx:alpine` za serviranje produkcijskog builda
+- kopira `frontend/nginx.conf`
+- izlaže port `8080`
+- podržava build argument `VITE_API_URL`
 
-1. `node:22-alpine` instalira dependency-je i pokreće `npm run build`
-2. `nginx:alpine` servira produkcijski React build
-3. Nginx koristi SPA fallback i `/api` proxy prema backend servisu
+## 10. Docker Compose i Persistencija
 
-### Backend Dockerfile
+`docker-compose.yml` pokreće frontend i backend kao odvojene servise. Frontend servis zavisi od backend servisa i dostupan je na portu `8080`, dok je backend dostupan na portu `3001`.
 
-Backend Dockerfile koristi `node:18-alpine`, instalira json-server dependency-je i pokreće json-server na portu `3001`.
-
-U Docker okruženju backend koristi persistent lokaciju:
-
-```text
-/data/db.json
-```
-
-Ako taj fajl ne postoji, `docker-entrypoint.sh` kopira početne podatke iz seed fajla u persistent lokaciju.
-
-## Objašnjenje docker-compose.yml
-
-`docker-compose.yml` definiše dva servisa:
-
-- `backend` - json-server servis dostupan na portu `3001`
-- `frontend` - React/Nginx servis dostupan na portu `8080`
-
-Backend koristi named Docker volume:
+Backend koristi named Docker volume za persistenciju `db.json` fajla:
 
 ```text
 backend-db-data:/data
 ```
 
-Ovaj volume čuva `db.json` podatke izvan lifecycle-a kontejnera. Izmjene zadataka ostaju sačuvane nakon ponovnog pokretanja kontejnera, dok god se volume ne obriše.
+Početni `db.json` seed se kopira u persistent lokaciju samo ako `/data/db.json` još ne postoji. Na taj način se lokalni Docker podaci ne prepisuju pri ponovnom pokretanju kontejnera.
 
-Frontend u Dockeru koristi:
+## 11. Health-check Skripta
 
-```text
-VITE_API_URL=/api
-```
+Health-check skripta provjerava:
 
-Nginx prosljeđuje `/api` zahtjeve backend servisu:
+- frontend URL
+- backend `/tasks` endpoint
 
-```text
-http://backend:3001
-```
-
-## Korištenje health-check.sh Skripte
-
-Skripta provjerava dostupnost frontend URL-a i backend `/tasks` endpointa.
-
-Prije prvog korištenja na Linux/macOS okruženju:
-
-```bash
-chmod +x scripts/health-check.sh
-```
-
-Pokretanje sa podrazumijevanim vrijednostima:
-
-```bash
-./scripts/health-check.sh
-```
-
-Pokretanje sa custom URL adresama:
+Lokalna Docker provjera:
 
 ```bash
 sh scripts/health-check.sh http://localhost:8080 http://localhost:3001
 ```
 
-Skripta vraća non-zero exit code ako neki servis nije dostupan.
+Online provjera deploymenta:
 
-## Google Cloud Run Deployment
+```bash
+sh scripts/health-check.sh https://student-task-manager-frontend-427616264825.europe-west1.run.app https://student-task-manager-backend-427616264825.europe-west1.run.app
+```
 
-Koraci za deployment:
+## 12. Google Cloud Deployment
 
-1. Kreirati Google Cloud projekat.
-2. Omogućiti Cloud Run API.
-3. Omogućiti Artifact Registry API.
-4. Kreirati Artifact Registry Docker repozitorij.
-5. Kreirati service account za deployment.
-6. Dodijeliti potrebne permisije za Cloud Run i Artifact Registry.
-7. Buildati backend Docker image.
-8. Pushati backend image u Artifact Registry.
-9. Deployati backend image na Cloud Run sa portom `3001`.
-10. Buildati frontend image sa `VITE_API_URL` vrijednošću postavljenom na backend Cloud Run URL.
-11. Pushati frontend image u Artifact Registry.
-12. Deployati frontend image na Cloud Run sa portom `8080`.
+Deployment je urađen na Google Cloud Run.
 
-## Artifact Registry
+```text
+Project ID: student-task-manager-zp-gmail
+Region: europe-west1
+Artifact Registry repository: student-task-manager-repo
+Backend service: student-task-manager-backend
+Frontend service: student-task-manager-frontend
+Backend URL: https://student-task-manager-backend-427616264825.europe-west1.run.app
+Backend /tasks endpoint: https://student-task-manager-backend-427616264825.europe-west1.run.app/tasks
+Frontend URL: https://student-task-manager-frontend-427616264825.europe-west1.run.app
+```
 
-Artifact Registry služi za čuvanje Docker image-a prije deploymenta na Cloud Run.
+Deployment tok:
 
-U ovom projektu se očekuju dva image-a:
+1. Omogućeni su Cloud Run, Artifact Registry i Cloud Build API servisi.
+2. Kreiran je Artifact Registry Docker repozitorij.
+3. Docker autentifikacija je podešena pomoću `gcloud`.
+4. Backend image je buildan lokalno.
+5. Backend image je push-an u Artifact Registry.
+6. Backend je deployan na Cloud Run.
+7. Frontend image je buildan sa `VITE_API_URL` vrijednošću postavljenom na backend Cloud Run URL.
+8. Frontend image je push-an u Artifact Registry.
+9. Frontend je deployan na Cloud Run.
 
-- `student-task-manager-backend`
-- `student-task-manager-frontend`
+## 13. Glavne Deployment Komande
 
-GitHub Actions workflow builda image-e, push-a ih u Artifact Registry i zatim ih koristi za Cloud Run deployment.
+Primjer komandi za Windows Command Prompt:
 
-## GitHub Actions
+```bat
+set PROJECT_ID=student-task-manager-zp-gmail
+set REGION=europe-west1
+set REPOSITORY=student-task-manager-repo
+set BACKEND_SERVICE=student-task-manager-backend
+set FRONTEND_SERVICE=student-task-manager-frontend
+set BACKEND_URL=https://student-task-manager-backend-427616264825.europe-west1.run.app
 
-Workflow se nalazi u:
+gcloud services enable run.googleapis.com artifactregistry.googleapis.com cloudbuild.googleapis.com
+
+gcloud artifacts repositories create %REPOSITORY% --repository-format=docker --location=%REGION% --description="Docker repository for Student Task Manager"
+
+gcloud auth configure-docker %REGION%-docker.pkg.dev
+
+docker build -t %REGION%-docker.pkg.dev/%PROJECT_ID%/%REPOSITORY%/backend:latest ./backend
+
+docker push %REGION%-docker.pkg.dev/%PROJECT_ID%/%REPOSITORY%/backend:latest
+
+gcloud run deploy %BACKEND_SERVICE% --image %REGION%-docker.pkg.dev/%PROJECT_ID%/%REPOSITORY%/backend:latest --region %REGION% --platform managed --allow-unauthenticated --port 3001
+
+docker build --build-arg VITE_API_URL=%BACKEND_URL% -t %REGION%-docker.pkg.dev/%PROJECT_ID%/%REPOSITORY%/frontend:latest ./frontend
+
+docker push %REGION%-docker.pkg.dev/%PROJECT_ID%/%REPOSITORY%/frontend:latest
+
+gcloud run deploy %FRONTEND_SERVICE% --image %REGION%-docker.pkg.dev/%PROJECT_ID%/%REPOSITORY%/frontend:latest --region %REGION% --platform managed --allow-unauthenticated --port 8080
+```
+
+## 14. GitHub Actions
+
+Workflow za CI/CD pripremu nalazi se u:
 
 ```text
 .github/workflows/deploy.yml
 ```
 
-Workflow radi sljedeće:
+Workflow je pripremljen da builda Docker image-e, push-a ih u Artifact Registry i deploya frontend i backend servise na Cloud Run.
 
-1. Preuzima kod iz repozitorija.
-2. Postavlja Docker Buildx.
-3. Autentifikuje se na Google Cloud.
-4. Konfiguriše Docker za Artifact Registry.
-5. Builda backend image.
-6. Push-a backend image.
-7. Deploy-a backend na Cloud Run.
-8. Čita backend Cloud Run URL.
-9. Builda frontend image sa backend URL vrijednošću.
-10. Push-a frontend image.
-11. Deploy-a frontend na Cloud Run.
-
-## Potrebni GitHub Secrets
-
-U GitHub repozitoriju potrebno je dodati sljedeće secrets:
+Potrebni GitHub Secrets:
 
 ```text
 GCP_PROJECT_ID
@@ -264,16 +248,18 @@ GCP_SERVICE_ACCOUNT_KEY
 ARTIFACT_REGISTRY_REPOSITORY
 ```
 
-## Refleksija
+Manualni deployment je uspješno završen, a GitHub Actions workflow je uključen kao priprema za CI/CD proces.
 
-### Šta je naučeno
+## 15. Napomena o Bazi Podataka
 
-Tokom izrade projekta naučeno je kako se React frontend povezuje sa jednostavnim REST backendom, kako se aplikacija kontejnerizuje pomoću Dockera i kako se priprema deployment na Google Cloud Run.
+U projektu se koristi json-server kao jednostavna simulacija backend/API servisa za potrebe kursnog projekta.
 
-### Koji su bili izazovi
+U lokalnom Docker okruženju persistencija podataka je riješena pomoću named Docker volume-a. Na Google Cloud Run okruženju container filesystem nije namijenjen kao produkcijska baza podataka. Za stvarnu produkcijsku aplikaciju bilo bi potrebno koristiti managed bazu podataka.
 
-Glavni izazovi su bili pravilno povezivanje frontend i backend servisa u Docker Compose okruženju, podešavanje Nginx `/api` proxy-ja i osiguravanje persistencije `db.json` fajla pomoću named Docker volume-a.
+## 16. Refleksija
 
-### Šta bi se moglo unaprijediti
+Tokom izrade projekta naučeno je kako se frontend i backend odvajaju u zasebne servise, kako se pišu Dockerfile konfiguracije i kako se koristi Docker Compose za lokalno pokretanje više servisa.
 
-Aplikacija bi se mogla unaprijediti dodavanjem stvarne autentifikacije, korisničkih računa, naprednijih filtera, testova i povezivanjem sa pravom bazom podataka.
+Također je naučeno kako se koriste Artifact Registry i Google Cloud Run za deployment kontejnerskih aplikacija. Jedan od glavnih izazova bio je pravilno povezivanje frontend i backend dijela u lokalnom Docker okruženju i u Cloud Run deploymentu.
+
+Moguća unapređenja uključuju stvarnu autentifikaciju, korištenje prave baze podataka i dodatne testove za stabilniji razvojni proces.
