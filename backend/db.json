@@ -1,0 +1,29 @@
+{
+  "tasks": [
+    {
+      "id": "1",
+      "title": "Završiti README dokumentaciju",
+      "description": "Dodati opis projekta, Docker upute i screenshot-e.",
+      "deadline": "2026-05-30",
+      "priority": "high",
+      "status": "pending"
+    },
+    {
+      "id": "2",
+      "title": "Pripremiti prezentaciju",
+      "description": "Objasniti funkcionalnosti aplikacije i deployment na Cloud Run.",
+      "deadline": "2026-06-01",
+      "priority": "medium",
+      "status": "done"
+    },
+    {
+      "title": "Zavrsiti projekat",
+      "description": "Zavrsavanje je bitno",
+      "deadline": "2026-05-31",
+      "priority": "high",
+      "status": "done",
+      "id": "j-ZpDz8504I"
+    }
+  ],
+  "$schema": "./node_modules/json-server/schema.json"
+}
